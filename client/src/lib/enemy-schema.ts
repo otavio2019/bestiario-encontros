@@ -399,6 +399,25 @@ export function suggestEnemyStats(challenge: string, ruleset: Ruleset, role: Ene
   };
 }
 
+export type DiceRoll = { total: number; rolls: number[]; modifier: number; formula: string };
+
+export function rollDice(formula: string): DiceRoll {
+  const normalized = formula.replace(/\s+/g, "").toLowerCase();
+  const match = normalized.match(/^(\d*)d(\d+)([+-]\d+)?$/);
+  if (!match) return { total: 0, rolls: [], modifier: 0, formula };
+  const count = Math.min(100, Math.max(1, Number(match[1] || 1)));
+  const sides = Math.min(1000, Math.max(2, Number(match[2])));
+  const modifier = Number(match[3] || 0);
+  const rolls = Array.from({ length: count }, () => Math.floor(Math.random() * sides) + 1);
+  return { total: rolls.reduce((sum, value) => sum + value, modifier), rolls, modifier, formula };
+}
+
+export function rollDamage(damage: string): DiceRoll {
+  const formulas = damage.match(/\d*d\d+(?:\s*[+-]\s*\d+)?/gi) ?? [];
+  const rolls = formulas.map(rollDice);
+  return { total: rolls.reduce((sum, result) => sum + result.total, 0), rolls: rolls.flatMap(result => result.rolls), modifier: rolls.reduce((sum, result) => sum + result.modifier, 0), formula: damage };
+}
+
 function normalizeAction(input: unknown): ActionBlock {
   const action = input && typeof input === "object" ? input as Partial<ActionBlock> : {};
   return {

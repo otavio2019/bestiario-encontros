@@ -107,3 +107,35 @@ h1,h2,h3,p { margin:0; }
 .stat-suggestion-grid b { display:block; color:#8f4f35; font-family:'Fraunces',serif; font-size:20px; margin:3px 0; }
 .stat-suggestion-note { font-size:10px !important; }
 @media (max-width:720px) { .stat-preparer-controls { display:grid; }.stat-suggestion-grid { grid-template-columns:repeat(3,1fr); } }
+
+.combat-shell { min-height:100vh; background:var(--canvas); color:var(--ink); }
+.combat-main { width:min(1180px, calc(100% - 48px)); margin:0 auto; padding:48px 0 80px; }
+.combat-heading { display:flex; justify-content:space-between; align-items:end; gap:25px; margin:14px 0 30px; }
+.combat-heading h1 { font-family:'Fraunces',serif; font-size:clamp(34px,5vw,58px); letter-spacing:-.045em; line-height:1; }
+.combat-heading p { color:#7d8988; margin-top:12px; }
+.combat-heading-actions { display:flex; gap:8px; }
+.combat-setup { max-width:800px; }
+.combat-entry { display:grid; grid-template-columns:1fr 150px 35px; gap:12px; align-items:end; border-top:1px solid #eee9e1; padding:13px 0; }
+.combat-entry .field-label { margin:0; }
+.combat-layout { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(280px,.75fr); gap:16px; align-items:start; }
+.combat-roster,.combat-log { background:var(--paper); border:1px solid var(--line); border-radius:9px; padding:23px 25px; }
+.combatant-card { border:1px solid #e5ddd3; border-radius:8px; padding:15px; margin-top:11px; background:#fff; }
+.combatant-card.defeated { opacity:.53; background:#f4ece8; }
+.combatant-top { display:flex; justify-content:space-between; align-items:start; gap:15px; }
+.combatant-top h3 { font-family:'Fraunces',serif; font-size:20px; }
+.combatant-top span { display:block; color:#8b9794; font-size:11px; margin-top:4px; }
+.combatant-top span b { color:var(--copper-dark); }
+.initiative-badge { display:grid; place-items:center; min-width:38px; height:38px; border-radius:50%; background:#f9eee6; color:var(--copper-dark); font-family:'Fraunces',serif; font-size:19px; }
+.hp-row { display:flex; align-items:center; gap:6px; margin:15px 0 11px; color:#a55245; }
+.hp-row input { width:58px; border:1px solid #e2d4cb; border-radius:5px; padding:5px 7px; color:var(--ink); font-weight:700; }
+.hp-row > span { color:#89918e; font-size:11px; }
+.hp-bar { height:6px; flex:1; background:#eee5df; border-radius:99px; overflow:hidden; margin-left:8px; }
+.hp-bar i { display:block; height:100%; background:#b86a57; transition:width .2s; }
+.combat-actions { display:flex; flex-wrap:wrap; gap:7px; border-top:1px solid #eee9e1; padding-top:12px; }
+.action-roll-button { display:flex; align-items:center; gap:6px; border:1px solid #e2d2c5; border-radius:5px; background:#fff8f2; color:#8c4f38; padding:8px 9px; font-size:11px; text-align:left; }
+.action-roll-button:hover { border-color:var(--copper); background:#fff0e5; }
+.action-roll-button small { color:#9c8b80; font-size:9px; }
+.log-list { display:grid; gap:7px; max-height:580px; overflow:auto; }
+.log-item { border-left:2px solid #cbbfb5; padding:8px 10px; background:#faf7f2; color:#7d8582; font-size:11px; line-height:1.4; }
+.log-item.hit { border-color:#b77a50; color:#86543a; }.log-item.damage { border-color:#a85448; color:#88463e; background:#fff3ef; }
+@media (max-width:760px) { .combat-main { width:calc(100% - 28px); padding-top:30px; }.combat-heading { display:block; }.combat-heading-actions { margin-top:20px; flex-wrap:wrap; }.combat-layout { grid-template-columns:1fr; }.combat-entry { grid-template-columns:1fr 90px 30px; } }

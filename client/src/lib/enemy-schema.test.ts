@@ -7,6 +7,8 @@ import {
   encounterMultiplier,
   xpForChallenge,
   suggestEnemyStats,
+  rollDamage,
+  rollDice,
 } from "./enemy-schema";
 
 function enemyFor(ruleset: "2014" | "2024", challenge: string) {
@@ -167,5 +169,22 @@ describe("suggestEnemyStats — preparação de ficha", () => {
     expect(result.armorClass).toBe(18);
     expect(result.attackBonus).toBe(8);
     expect(result.damagePerRound).toBe(24);
+  });
+});
+
+describe("rolagens do modo Combate", () => {
+  it("interpreta uma fórmula simples de dado", () => {
+    const result = rollDice("2d6+3");
+
+    expect(result.rolls).toHaveLength(2);
+    expect(result.rolls.every(value => value >= 1 && value <= 6)).toBe(true);
+    expect(result.total).toBe(result.rolls[0] + result.rolls[1] + 3);
+  });
+
+  it("combina dados de dano em uma ação", () => {
+    const result = rollDamage("1d10 + 3 perfurante + 1d6 fogo");
+
+    expect(result.rolls).toHaveLength(2);
+    expect(result.total).toBe(result.rolls[0] + result.rolls[1] + 3);
   });
 });
