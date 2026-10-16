@@ -229,6 +229,14 @@ export function starterEnemies(): Enemy[] {
   ];
 }
 
+export function challengeToNumber(challenge: string) {
+  if (challenge === "1/8") return 0.125;
+  if (challenge === "1/4") return 0.25;
+  if (challenge === "1/2") return 0.5;
+  if (challenge === "20+") return 20;
+  return Number(challenge) || 0;
+}
+
 export function validateEnemy(enemy: Enemy): string[] {
   const errors: string[] = [];
   if (!enemy.name.trim()) errors.push("Dê um nome ao inimigo.");
@@ -271,7 +279,7 @@ export function xpForChallenge(challenge: string) {
   return xpByChallenge[challenge] ?? xpByChallenge[challenge.replace("+", "")] ?? 0;
 }
 
-function encounterMultiplier(monsterCount: number, partyCount: number) {
+export function encounterMultiplier(monsterCount: number, partyCount: number) {
   const base = monsterCount <= 1 ? 1 : monsterCount === 2 ? 1.5 : monsterCount <= 6 ? 2 : monsterCount <= 10 ? 2.5 : monsterCount <= 14 ? 3 : 4;
   if (partyCount < 3) return base === 4 ? 5 : base === 3 ? 4 : base === 2.5 ? 3 : base + 0.5;
   if (partyCount >= 6) return base === 1 ? 0.5 : base === 1.5 ? 1 : base === 2 ? 1.5 : base === 2.5 ? 2 : base - 0.5;
@@ -298,13 +306,62 @@ export function assessEncounter(enemy: Enemy, partyLevel: number, partyCount: nu
   return { xp, adjustedXp, difficulty, label: difficulty === "below" ? "Abaixo do fácil" : difficulty === "easy" ? "Fácil" : difficulty === "medium" ? "Médio" : difficulty === "hard" ? "Difícil" : "Mortal", budget: partyThresholds, target, ratio: Math.round((adjustedXp / target) * 100), note: `Em 2014, a quantidade de monstros aplica um multiplicador de ${encounterMultiplier(safeMonsters, safeParty)}× ao XP ajustado.` };
 }
 
+function normalizeAction(input: unknown): ActionBlock {
+  const action = input && typeof input === "object" ? input as Partial<ActionBlock> : {};
+  return {
+    name: typeof action.name === "string" ? action.name : "Nova característica",
+    description: typeof action.description === "string" ? action.description : "",
+    ...(typeof action.attackBonus === "number" && Number.isFinite(action.attackBonus) ? { attackBonus: action.attackBonus } : {}),
+    ...(abilityKeys.includes(action.saveAbility as AbilityKey) ? { saveAbility: action.saveAbility as AbilityKey } : {}),
+    ...(typeof action.saveDc === "number" && Number.isFinite(action.saveDc) ? { saveDc: action.saveDc } : {}),
+    ...(typeof action.damage === "string" ? { damage: action.damage } : {}),
+  };
+}
+
+export function normalizeEnemy(input: unknown): Enemy | null {
+  if (!input || typeof input !== "object") return null;
+  const source = input as Partial<Enemy>;
+  if (typeof source.name !== "string" || !source.name.trim()) return null;
+  const base = defaultEnemy();
+  const abilities = source.abilities && typeof source.abilities === "object" ? source.abilities as Partial<Abilities> : {};
+  const normalized: Enemy = {
+    ...base,
+    ...source,
+    id: typeof source.id === "string" && source.id ? source.id : createId(),
+    name: source.name.trim(),
+    concept: typeof source.concept === "string" ? source.concept : "",
+    ruleset: source.ruleset === "2024" ? "2024" : "2014",
+    provenance: source.provenance === "SRD" || source.provenance === "Original" ? source.provenance : "Criado por você",
+    abilities: {
+      for: Number.isFinite(abilities.for) ? Number(abilities.for) : base.abilities.for,
+      des: Number.isFinite(abilities.des) ? Number(abilities.des) : base.abilities.des,
+      con: Number.isFinite(abilities.con) ? Number(abilities.con) : base.abilities.con,
+      int: Number.isFinite(abilities.int) ? Number(abilities.int) : base.abilities.int,
+      sab: Number.isFinite(abilities.sab) ? Number(abilities.sab) : base.abilities.sab,
+      car: Number.isFinite(abilities.car) ? Number(abilities.car) : base.abilities.car,
+    },
+    armorClass: Number.isFinite(source.armorClass) ? Number(source.armorClass) : base.armorClass,
+    hitPoints: Number.isFinite(source.hitPoints) ? Number(source.hitPoints) : base.hitPoints,
+    proficiencyBonus: Number.isFinite(source.proficiencyBonus) ? Number(source.proficiencyBonus) : base.proficiencyBonus,
+    traits: Array.isArray(source.traits) ? source.traits.map(normalizeAction) : [],
+    actions: Array.isArray(source.actions) ? source.actions.map(normalizeAction) : [],
+    reactions: Array.isArray(source.reactions) ? source.reactions.map(normalizeAction) : [],
+    legendaryActions: Array.isArray(source.legendaryActions) ? source.legendaryActions.map(normalizeAction) : [],
+    createdAt: typeof source.createdAt === "string" ? source.createdAt : base.createdAt,
+    updatedAt: typeof source.updatedAt === "string" ? source.updatedAt : base.updatedAt,
+  };
+  return normalized;
+}
+
 const STORAGE_KEY = "bestiario-enemies-v0";
-export function loadEnemies() {
+export function loadEnemies(): Enemy[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return starterEnemies();
-    const parsed = JSON.parse(raw) as Enemy[];
-    return Array.isArray(parsed) && parsed.length ? parsed : starterEnemies();
+    const parsed = JSON.parse(raw) as unknown;
+    const imported = Array.isArray(parsed) ? parsed : parsed && typeof parsed === "object" && Array.isArray((parsed as { enemies?: unknown }).enemies) ? (parsed as { enemies: unknown[] }).enemies : null;
+    if (!imported) return starterEnemies();
+    return imported.map(normalizeEnemy).filter((enemy): enemy is Enemy => enemy !== null);
   } catch {
     return starterEnemies();
   }

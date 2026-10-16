@@ -1,0 +1,118 @@
+import { describe, expect, it } from "vitest";
+import {
+  assessEncounter,
+  calculateModifier,
+  defaultEnemy,
+  encounterMultiplier,
+  xpForChallenge,
+} from "./enemy-schema";
+
+function enemyFor(ruleset: "2014" | "2024", challenge: string) {
+  return { ...defaultEnemy(), ruleset, challenge };
+}
+
+describe("funções básicas de regras", () => {
+  it("calcula modificadores de atributo corretamente, inclusive negativos", () => {
+    expect(calculateModifier(1)).toBe(-5);
+    expect(calculateModifier(9)).toBe(-1);
+    expect(calculateModifier(10)).toBe(0);
+    expect(calculateModifier(18)).toBe(4);
+  });
+
+  it("converte ND fracionário e ND alto em XP", () => {
+    expect(xpForChallenge("0")).toBe(10);
+    expect(xpForChallenge("1/8")).toBe(25);
+    expect(xpForChallenge("1/4")).toBe(50);
+    expect(xpForChallenge("1/2")).toBe(100);
+    expect(xpForChallenge("20+")).toBe(25000);
+    expect(xpForChallenge("inexistente")).toBe(0);
+  });
+
+  it("aplica os multiplicadores de quantidade e tamanho da party de 2014", () => {
+    expect(encounterMultiplier(1, 4)).toBe(1);
+    expect(encounterMultiplier(2, 4)).toBe(1.5);
+    expect(encounterMultiplier(6, 4)).toBe(2);
+    expect(encounterMultiplier(11, 4)).toBe(3);
+    expect(encounterMultiplier(15, 4)).toBe(4);
+    expect(encounterMultiplier(2, 2)).toBe(2);
+    expect(encounterMultiplier(2, 6)).toBe(1);
+  });
+});
+
+describe("assessEncounter — D&D 5e 2014", () => {
+  it("classifica uma criatura única como fácil para uma party de nível 5", () => {
+    const result = assessEncounter(enemyFor("2014", "4"), 5, 4, 1);
+
+    expect(result.xp).toBe(1100);
+    expect(result.adjustedXp).toBe(1100);
+    expect(result.difficulty).toBe("easy");
+    expect(result.label).toBe("Fácil");
+    expect(result.budget).toEqual({ easy: 1000, medium: 2000, hard: 3000, deadly: 4400 });
+    expect(result.target).toBe(2000);
+    expect(result.ratio).toBe(55);
+  });
+
+  it("aplica o multiplicador para várias criaturas", () => {
+    const result = assessEncounter(enemyFor("2014", "4"), 5, 4, 2);
+
+    expect(result.xp).toBe(2200);
+    expect(result.adjustedXp).toBe(3300);
+    expect(result.difficulty).toBe("hard");
+    expect(result.label).toBe("Difícil");
+    expect(result.target).toBe(4400);
+    expect(result.ratio).toBe(75);
+    expect(result.note).toContain("multiplicador de 1.5×");
+  });
+
+  it("classifica um encontro abaixo do limite fácil", () => {
+    const result = assessEncounter(enemyFor("2014", "0"), 5, 4, 1);
+
+    expect(result.difficulty).toBe("below");
+    expect(result.label).toBe("Abaixo do fácil");
+    expect(result.adjustedXp).toBe(10);
+    expect(result.target).toBe(1000);
+  });
+});
+
+describe("assessEncounter — D&D 2024", () => {
+  it("usa o orçamento diretamente, sem multiplicador por quantidade", () => {
+    const result = assessEncounter(enemyFor("2024", "1"), 5, 4, 4);
+
+    expect(result.xp).toBe(800);
+    expect(result.adjustedXp).toBe(800);
+    expect(result.difficulty).toBe("low");
+    expect(result.label).toBe("Baixa");
+    expect(result.budget).toEqual({ low: 2000, moderate: 3000, high: 4400 });
+    expect(result.target).toBe(2000);
+    expect(result.ratio).toBe(40);
+    expect(result.note).toContain("não há multiplicador");
+  });
+
+  it("classifica corretamente um encontro acima do orçamento alto", () => {
+    const result = assessEncounter(enemyFor("2024", "20+"), 5, 4, 4);
+
+    expect(result.xp).toBe(100000);
+    expect(result.adjustedXp).toBe(100000);
+    expect(result.difficulty).toBe("over");
+    expect(result.label).toBe("Acima do orçamento");
+    expect(result.target).toBe(4400);
+    expect(result.ratio).toBe(2273);
+  });
+});
+
+describe("limites de entrada", () => {
+  it("limita nível, tamanho da party e quantidade de monstros aos intervalos suportados", () => {
+    const normal = assessEncounter(enemyFor("2014", "1"), 1, 1, 1);
+    const clamped = assessEncounter(enemyFor("2014", "1"), 0, 0, 0);
+
+    expect(clamped).toEqual(normal);
+  });
+
+  it("limita valores acima do intervalo suportado", () => {
+    const result = assessEncounter(enemyFor("2024", "20+"), 99, 99, 999);
+
+    expect(result.xp).toBe(2500000);
+    expect(result.difficulty).toBe("over");
+    expect(result.budget).toEqual({ low: 76800, moderate: 158400, high: 264000 });
+  });
+});
