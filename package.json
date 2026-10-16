@@ -16,7 +16,8 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "api:dev": "tsx watch server/index.ts",
-    "api:start": "tsx server/index.ts"
+    "api:start": "tsx server/index.ts",
+    "db:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",

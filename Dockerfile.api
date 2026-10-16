@@ -11,4 +11,4 @@ RUN pnpm db:generate
 
 ENV NODE_ENV=production
 EXPOSE 3000
-CMD ["pnpm", "api:start"]
+CMD ["sh", "-c", "pnpm db:deploy && pnpm api:start"]
