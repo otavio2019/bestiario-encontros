@@ -31,7 +31,7 @@ pnpm build
 pnpm preview
 ```
 
-O projeto não usa backend, banco, autenticação, API privada ou runtime proprietário. Os inimigos são armazenados em `localStorage` no navegador.
+O frontend continua funcionando sem backend e mantém a biblioteca local em `localStorage`. Quando a API estiver configurada, o cabeçalho também oferece login com GitHub.
 
 ## GitHub Pages
 
@@ -41,19 +41,62 @@ Como o GitHub Pages serve apenas arquivos estáticos, o workflow também copia `
 
 No repositório do GitHub, habilite **Settings → Pages → Source: GitHub Actions** uma vez. A URL esperada será `https://SEU_USUARIO.github.io/bestiario-encontros/`.
 
-## Docker e Prisma
+Em **Settings → Secrets and variables → Actions → Variables**, crie `VITE_API_URL` com a URL pública da API. O workflow injeta essa variável no build do frontend.
 
-O Docker Compose sobe um PostgreSQL local para o futuro backend:
+## Login OAuth, Docker e Prisma
+
+O backend OAuth fica em `server/` e expõe:
+
+- `GET /api/auth/github` — inicia o login no GitHub;
+- `GET /api/auth/github/callback` — valida o retorno OAuth;
+- `GET /api/auth/me` — retorna o usuário da sessão atual;
+- `POST /api/auth/logout` — encerra a sessão;
+- `GET /api/health` — verifica se a API está disponível.
+
+As sessões são tokens aleatórios armazenados no PostgreSQL e enviados ao navegador em cookie `HttpOnly`. O token OAuth do GitHub não é persistido no banco.
+
+Para configurar o GitHub OAuth, crie uma OAuth App em **GitHub → Settings → Developer settings → OAuth Apps**. Use como callback local:
+
+```txt
+http://localhost:3000/api/auth/github/callback
+```
+
+Preencha `.env` a partir do exemplo:
 
 ```bash
 cp .env.example .env
-docker compose up -d postgres
-pnpm db:generate
-pnpm db:push
-pnpm db:studio
 ```
 
-O schema inicial em [`prisma/schema.prisma`](prisma/schema.prisma) já prevê usuários, sessões e contas OAuth. Ele é uma base para implementar login no backend, mas ainda não implementa autenticação sozinho.
+Para executar o banco e a API localmente:
+
+```bash
+docker compose up -d postgres
+pnpm db:generate
+pnpm db:migrate
+pnpm api:dev
+```
+
+Em outro terminal, execute o frontend:
+
+```bash
+pnpm dev
+```
+
+O botão **Entrar com GitHub** chamará `VITE_API_URL`, que por padrão é `http://localhost:3000`.
+
+Para executar banco e API juntos pelo Docker:
+
+```bash
+docker compose up --build
+```
+
+O schema inicial em [`prisma/schema.prisma`](prisma/schema.prisma), a migration em [`prisma/migrations/0001_init/migration.sql`](prisma/migrations/0001_init/migration.sql) e o cliente Prisma já estão preparados para usuários, sessões e contas OAuth.
+
+Para abrir o Prisma Studio:
+
+```bash
+pnpm db:studio
+```
 
 Para testar a versão estática em Docker:
 
@@ -62,7 +105,7 @@ docker build -t bestiario-encontros .
 docker run --rm -p 8080:80 bestiario-encontros
 ```
 
-O login deverá ficar em uma API separada, hospedada em um serviço que execute Node/Docker e tenha PostgreSQL. O GitHub Pages continua servindo somente o frontend, consumindo essa API por HTTPS.
+Em produção, hospede a API em um serviço que execute Node/Docker e tenha PostgreSQL. Configure `FRONTEND_URL` com a URL do GitHub Pages, `VITE_API_URL` com a URL pública da API e `GITHUB_CALLBACK_URL` com a URL pública `/api/auth/github/callback`. Como são domínios diferentes, mantenha `COOKIE_SAME_SITE=none` e HTTPS na API.
 
 ## Licença e conteúdo
 

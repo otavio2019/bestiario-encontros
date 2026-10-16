@@ -17,5 +17,26 @@ services:
       timeout: 5s
       retries: 10
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: bestiario-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://bestiario:bestiario_dev@postgres:5432/bestiario?schema=public
+      PORT: 3000
+      NODE_ENV: development
+      FRONTEND_URL: http://localhost:5173
+      GITHUB_CALLBACK_URL: http://localhost:3000/api/auth/github/callback
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      COOKIE_SAME_SITE: lax
+    ports:
+      - "3000:3000"
+
 volumes:
   bestiario-postgres-data:

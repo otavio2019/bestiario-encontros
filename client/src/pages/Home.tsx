@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, ChevronRight, Copy, Download, Filter, Grid3X3, List, Plus, Search, Sparkles, Trash2, Upload, Wand2 } from "lucide-react";
+import { BookOpen, ChevronRight, Copy, Download, Filter, Grid3X3, List, LogIn, LogOut, Plus, Search, Sparkles, Trash2, Upload, Wand2 } from "lucide-react";
+import { API_URL, AuthUser, getCurrentUser, logout } from "@/lib/auth";
 import { challengeToNumber, createId, Enemy, loadEnemies, normalizeEnemy, saveEnemies } from "@/lib/enemy-schema";
 
 const provenanceTone: Record<Enemy["provenance"], string> = {
@@ -24,6 +25,16 @@ export default function Home() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then(setUser).catch(() => setUser(null));
+  }, []);
+
+  async function handleLogout() {
+    await logout();
+    setUser(null);
+  }
 
   const types = Array.from(new Set(enemies.map(enemy => enemy.type))).sort();
   const sizes = Array.from(new Set(enemies.map(enemy => enemy.size))).sort();
@@ -96,7 +107,7 @@ export default function Home() {
       </aside>
 
       <main className="main-content" id="biblioteca">
-        <header className="topbar"><div className="breadcrumb"><span>Campanha</span><ChevronRight size={14} /><strong>Biblioteca de inimigos</strong></div><div className="top-actions"><button type="button" className="icon-button" aria-label="Importar JSON" title="Importar JSON" onClick={() => fileInput.current?.click()}><Upload size={17} /></button><button type="button" className="icon-button" aria-label="Exportar biblioteca" title="Exportar biblioteca" onClick={exportLibrary}><Download size={17} /></button><input ref={fileInput} type="file" accept="application/json" className="visually-hidden" onChange={event => { importLibrary(event.target.files?.[0]); event.currentTarget.value = ""; }} /></div></header>
+        <header className="topbar"><div className="breadcrumb"><span>Campanha</span><ChevronRight size={14} /><strong>Biblioteca de inimigos</strong></div><div className="top-actions"><button type="button" className="icon-button" aria-label="Importar JSON" title="Importar JSON" onClick={() => fileInput.current?.click()}><Upload size={17} /></button><button type="button" className="icon-button" aria-label="Exportar biblioteca" title="Exportar biblioteca" onClick={exportLibrary}><Download size={17} /></button>{user ? <><span className="auth-user">{user.image && <img src={user.image} alt="" />}{user.name ?? user.email}</span><button type="button" className="secondary-button auth-logout" onClick={handleLogout}><LogOut size={14} /> Sair</button></> : <a className="secondary-button auth-login" href={`${API_URL}/api/auth/github`}><LogIn size={15} /> Entrar com GitHub</a>}<input ref={fileInput} type="file" accept="application/json" className="visually-hidden" onChange={event => { importLibrary(event.target.files?.[0]); event.currentTarget.value = ""; }} /></div></header>
         <section className="hero-row"><div><div className="eyebrow"><span className="eyebrow-line" /> ARQUIVO DE CAMPANHA</div><h1>Seus inimigos,<br /><em>prontos para a cena.</em></h1><p className="hero-copy">Uma biblioteca viva para criar, ajustar e consultar criaturas em D&D 5e e 2024.</p></div><Link href="/inimigos/novo" className="primary-button"><Plus size={18} /> Criar inimigo</Link></section>
 
         <section className="stats-row" aria-label="Resumo da biblioteca"><div className="stat-card"><span className="stat-label">Total na biblioteca</span><strong>{friendlyCount(enemies.length)}</strong><span className="stat-meta">inimigos guardados</span></div><div className="stat-card"><span className="stat-label">Versão mais usada</span><strong>{enemies.filter(enemy => enemy.ruleset === "2024").length >= enemies.filter(enemy => enemy.ruleset === "2014").length ? "2024" : "5e"}</strong><span className="stat-meta">regras ativas</span></div><div className="stat-card stat-accent"><span className="stat-label">Seu próximo passo</span><strong><Wand2 size={19} /> ajustar</strong><span className="stat-meta">um inimigo existente</span></div></section>
