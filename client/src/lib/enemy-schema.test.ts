@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   assessEncounter,
+  assessEncounterComposition,
   calculateModifier,
   defaultEnemy,
   encounterMultiplier,
@@ -114,5 +115,34 @@ describe("limites de entrada", () => {
     expect(result.xp).toBe(2500000);
     expect(result.difficulty).toBe("over");
     expect(result.budget).toEqual({ low: 76800, moderate: 158400, high: 264000 });
+  });
+});
+
+describe("assessEncounterComposition — vários inimigos", () => {
+  it("soma tipos diferentes e aplica o multiplicador pelo total de monstros em 2014", () => {
+    const enemies = [
+      { ...defaultEnemy(), id: "orc", name: "Orc", challenge: "1/2", ruleset: "2014" as const },
+      { ...defaultEnemy(), id: "wolf", name: "Lobo", challenge: "1/4", ruleset: "2014" as const },
+    ];
+    const result = assessEncounterComposition(enemies, [{ enemyId: "orc", count: 1 }, { enemyId: "wolf", count: 2 }], "2014", 3, 4);
+
+    expect(result.monsterCount).toBe(3);
+    expect(result.xp).toBe(200);
+    expect(result.adjustedXp).toBe(400);
+    expect(result.difficulty).toBe("easy");
+    expect(result.lines).toHaveLength(2);
+  });
+
+  it("não aplica multiplicador quando a composição usa a matemática de 2024", () => {
+    const enemies = [
+      { ...defaultEnemy(), id: "orc", name: "Orc", challenge: "1", ruleset: "2014" as const },
+      { ...defaultEnemy(), id: "wolf", name: "Lobo", challenge: "1/4", ruleset: "2014" as const },
+    ];
+    const result = assessEncounterComposition(enemies, [{ enemyId: "orc", count: 2 }, { enemyId: "wolf", count: 2 }], "2024", 5, 4);
+
+    expect(result.monsterCount).toBe(4);
+    expect(result.xp).toBe(500);
+    expect(result.adjustedXp).toBe(500);
+    expect(result.difficulty).toBe("low");
   });
 });

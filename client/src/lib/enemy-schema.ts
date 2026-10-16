@@ -101,6 +101,17 @@ export function emptyAction(): ActionBlock {
   return { name: "Nova característica", description: "Descreva o efeito, alcance e condições." };
 }
 
+export const passiveTemplates = [
+  { name: "Resistência a dano", description: "A criatura tem resistência a um tipo de dano escolhido pelo Mestre." },
+  { name: "Visão no escuro", description: "A criatura enxerga na penumbra a até 18 metros como se fosse luz plena e na escuridão como se fosse penumbra." },
+  { name: "Faro aguçado", description: "A criatura tem vantagem em testes de Sabedoria (Percepção) que dependam do olfato." },
+  { name: "Aura de ameaça", description: "Uma criatura que comece o turno a até 3 metros deve ser bem-sucedida em um teste de resistência ou ficará amedrontada até o início do próximo turno da criatura." },
+  { name: "Regeneração", description: "A criatura recupera uma quantidade de pontos de vida no início de cada turno. A regeneração não funciona após sofrer o tipo de dano definido pelo Mestre." },
+  { name: "Evasão", description: "Se a criatura for bem-sucedida em um teste de resistência de Destreza para sofrer metade do dano, ela não sofre dano; se falhar, sofre metade." },
+  { name: "Resistência mágica", description: "A criatura tem vantagem em testes de resistência contra magias e outros efeitos mágicos." },
+  { name: "Camuflagem natural", description: "A criatura tem vantagem em testes de Destreza (Furtividade) feitos para se esconder no ambiente escolhido pelo Mestre." },
+] as const;
+
 export function defaultEnemy(): Enemy {
   const now = new Date().toISOString();
   return {
@@ -250,6 +261,8 @@ export function validateEnemy(enemy: Enemy): string[] {
 
 export type EncounterDifficulty = "low" | "moderate" | "high" | "easy" | "medium" | "hard" | "deadly";
 
+export type EncounterEntry = { enemyId: string; count: number };
+
 const xpByChallenge: Record<string, number> = {
   "0": 10, "1/8": 25, "1/4": 50, "1/2": 100, "1": 200, "2": 450, "3": 700, "4": 1100,
   "5": 1800, "6": 2300, "7": 2900, "8": 3900, "9": 5000, "10": 5900, "11": 7200,
@@ -286,12 +299,11 @@ export function encounterMultiplier(monsterCount: number, partyCount: number) {
   return base;
 }
 
-export function assessEncounter(enemy: Enemy, partyLevel: number, partyCount: number, monsterCount: number) {
+function assessEncounterXp(xp: number, ruleset: Ruleset, partyLevel: number, partyCount: number, monsterCount: number) {
   const safeLevel = Math.min(20, Math.max(1, Math.round(partyLevel)));
   const safeParty = Math.min(12, Math.max(1, Math.round(partyCount)));
   const safeMonsters = Math.min(100, Math.max(1, Math.round(monsterCount)));
-  const xp = xpForChallenge(enemy.challenge) * safeMonsters;
-  if (enemy.ruleset === "2024") {
+  if (ruleset === "2024") {
     const [low, moderate, high] = budgets2024[safeLevel];
     const budget = { low: low * safeParty, moderate: moderate * safeParty, high: high * safeParty };
     const difficulty = xp <= budget.low ? "low" : xp <= budget.moderate ? "moderate" : xp <= budget.high ? "high" : "over";
@@ -304,6 +316,22 @@ export function assessEncounter(enemy: Enemy, partyLevel: number, partyCount: nu
   const difficulty = adjustedXp < partyThresholds.easy ? "below" : adjustedXp < partyThresholds.medium ? "easy" : adjustedXp < partyThresholds.hard ? "medium" : adjustedXp < partyThresholds.deadly ? "hard" : "deadly";
   const target = difficulty === "below" ? partyThresholds.easy : difficulty === "easy" ? partyThresholds.medium : difficulty === "medium" ? partyThresholds.hard : partyThresholds.deadly;
   return { xp, adjustedXp, difficulty, label: difficulty === "below" ? "Abaixo do fácil" : difficulty === "easy" ? "Fácil" : difficulty === "medium" ? "Médio" : difficulty === "hard" ? "Difícil" : "Mortal", budget: partyThresholds, target, ratio: Math.round((adjustedXp / target) * 100), note: `Em 2014, a quantidade de monstros aplica um multiplicador de ${encounterMultiplier(safeMonsters, safeParty)}× ao XP ajustado.` };
+}
+
+export function assessEncounter(enemy: Enemy, partyLevel: number, partyCount: number, monsterCount: number) {
+  const safeMonsters = Math.min(100, Math.max(1, Math.round(monsterCount)));
+  return assessEncounterXp(xpForChallenge(enemy.challenge) * safeMonsters, enemy.ruleset, partyLevel, partyCount, safeMonsters);
+}
+
+export function assessEncounterComposition(enemies: Enemy[], entries: EncounterEntry[], ruleset: Ruleset, partyLevel: number, partyCount: number) {
+  const lines = entries.map(entry => {
+    const enemy = enemies.find(item => item.id === entry.enemyId);
+    const count = Math.min(100, Math.max(1, Math.round(entry.count)));
+    return enemy ? { enemyId: enemy.id, name: enemy.name, challenge: enemy.challenge, count, xp: xpForChallenge(enemy.challenge) * count } : null;
+  }).filter((line): line is { enemyId: string; name: string; challenge: string; count: number; xp: number } => line !== null);
+  const monsterCount = lines.reduce((total, line) => total + line.count, 0);
+  const base = assessEncounterXp(lines.reduce((total, line) => total + line.xp, 0), ruleset, partyLevel, partyCount, monsterCount);
+  return { ...base, lines, monsterCount };
 }
 
 function normalizeAction(input: unknown): ActionBlock {
@@ -354,6 +382,7 @@ export function normalizeEnemy(input: unknown): Enemy | null {
 }
 
 const STORAGE_KEY = "bestiario-enemies-v0";
+const DRAFT_KEY = "bestiario-enemy-draft-v1";
 export function loadEnemies(): Enemy[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -369,4 +398,21 @@ export function loadEnemies(): Enemy[] {
 
 export function saveEnemies(enemies: Enemy[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(enemies));
+}
+
+export function loadEnemyDraft(id: string) {
+  try {
+    const raw = localStorage.getItem(`${DRAFT_KEY}:${id}`);
+    return raw ? normalizeEnemy(JSON.parse(raw)) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveEnemyDraft(enemy: Enemy, key = enemy.id) {
+  localStorage.setItem(`${DRAFT_KEY}:${key}`, JSON.stringify(enemy));
+}
+
+export function clearEnemyDraft(id: string) {
+  localStorage.removeItem(`${DRAFT_KEY}:${id}`);
 }

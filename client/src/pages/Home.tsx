@@ -102,7 +102,7 @@ export default function Home() {
           <a className="nav-item active" href="#biblioteca"><BookOpen size={17} /> Biblioteca <span className="nav-count">{friendlyCount(enemies.length)}</span></a>
           <button type="button" className="nav-item" onClick={() => navigate("/inimigos/novo")}><Plus size={17} /> Novo inimigo</button>
         </nav>
-        <div className="sidebar-note"><Sparkles size={16} /><p><strong>Feito para a mesa.</strong><br />Crie fichas com o ritmo da sua sessão.</p></div>
+        <Link href="/encontros" className="sidebar-note sidebar-link"><Sparkles size={16} /><p><strong>Montar encontro.</strong><br />Combine inimigos e confira o perigo.</p></Link>
         <div className="sidebar-bottom"><span className="status-dot" /> Biblioteca local <span className="version">v0.1</span></div>
       </aside>
 

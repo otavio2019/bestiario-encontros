@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { ArrowLeft, Check, ChevronDown, Plus, Save, Trash2, Wand2 } from "lucide-react";
-import { ActionBlock, abilityKeys, abilityLabels, abilityShortLabels, assessEncounter, calculateModifier, challenges, defaultEnemy, emptyAction, Enemy, loadEnemies, saveEnemies, sizes, creatureTypes, suggestedAttackBonus, suggestedProficiency, suggestedSaveDc, validateEnemy, formatModifier } from "@/lib/enemy-schema";
+import { ActionBlock, abilityKeys, abilityLabels, abilityShortLabels, assessEncounter, calculateModifier, challenges, defaultEnemy, emptyAction, Enemy, loadEnemies, loadEnemyDraft, passiveTemplates, saveEnemies, saveEnemyDraft, sizes, creatureTypes, suggestedAttackBonus, suggestedProficiency, suggestedSaveDc, validateEnemy, formatModifier } from "@/lib/enemy-schema";
 
 function NumberField({ label, value, onChange, suffix }: { label: string; value: number; onChange: (value: number) => void; suffix?: string }) {
   return <label className="field-label"><span>{label}</span><div className="number-input"><input type="number" value={value} onChange={event => onChange(Number(event.target.value))} />{suffix && <small>{suffix}</small>}</div></label>;
@@ -19,11 +19,15 @@ export default function EnemyEditor() {
   const enemyId = editParams?.id ?? params?.id;
   const isNew = !enemyId || enemyId === "novo";
   const [enemy, setEnemy] = useState<Enemy>(() => {
+    const draft = loadEnemyDraft(isNew ? "new" : enemyId!);
+    if (draft) return draft;
     if (isNew) return defaultEnemy();
     return loadEnemies().find(item => item.id === enemyId) ?? defaultEnemy();
   });
   const [errors, setErrors] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
+  const [autosaveState, setAutosaveState] = useState<"salvando" | "salvo">("salvo");
+  const [passiveTemplate, setPassiveTemplate] = useState("");
   const [partyLevel, setPartyLevel] = useState(5);
   const [partyCount, setPartyCount] = useState(4);
   const [monsterCount, setMonsterCount] = useState(1);
@@ -34,6 +38,21 @@ export default function EnemyEditor() {
       if (found) setEnemy(found);
     }
   }, [isNew, enemyId]);
+
+  useEffect(() => {
+    setAutosaveState("salvando");
+    const timer = window.setTimeout(() => {
+      saveEnemyDraft(enemy, isNew ? "new" : enemy.id);
+      if (!isNew) {
+        const current = loadEnemies();
+        if (current.some(item => item.id === enemy.id) && validateEnemy(enemy).length === 0) {
+          saveEnemies(current.map(item => item.id === enemy.id ? enemy : item));
+        }
+      }
+      setAutosaveState("salvo");
+    }, 650);
+    return () => window.clearTimeout(timer);
+  }, [enemy, isNew]);
 
   const suggested = useMemo(() => suggestedProficiency(enemy.challenge), [enemy.challenge]);
   const encounter = useMemo(() => assessEncounter(enemy, partyLevel, partyCount, monsterCount), [enemy, partyLevel, partyCount, monsterCount]);
@@ -50,8 +69,14 @@ export default function EnemyEditor() {
     if (isNew) navigate(`/inimigos/${enemy.id}`);
   }
   function applySuggestedProficiency() { update({ proficiencyBonus: suggested }); }
+  function addPassive() {
+    const template = passiveTemplates.find(item => item.name === passiveTemplate);
+    if (!template) return;
+    update({ traits: [...enemy.traits, { name: template.name, description: template.description }] });
+    setPassiveTemplate("");
+  }
 
-  return <div className="editor-shell"><header className="editor-topbar"><Link href="/" className="back-link"><ArrowLeft size={17} /> Voltar à biblioteca</Link><div className="editor-actions"><span className="save-state">{saved ? <><Check size={15} /> Salvo</> : "Rascunho local"}</span><button className="primary-button compact" onClick={save}><Save size={16} /> Salvar ficha</button></div></header><main className="editor-main"><div className="editor-header"><div><div className="eyebrow"><span className="eyebrow-line" /> {isNew ? "NOVA FICHA" : "EDITANDO FICHA"}</div><h1>{isNew ? "Dê forma ao próximo encontro." : enemy.name || "Ficha sem nome"}</h1><p>Preencha o essencial primeiro. O resto pode ganhar detalhes durante a preparação.</p></div><div className="rules-switch"><span>Versão de regras</span><div className="segmented"><button className={enemy.ruleset === "2014" ? "active" : ""} onClick={() => update({ ruleset: "2014" })}>5e · 2014</button><button className={enemy.ruleset === "2024" ? "active" : ""} onClick={() => update({ ruleset: "2024" })}>D&D · 2024</button></div></div></div>{errors.length > 0 && <div className="error-box" role="alert"><strong>Antes de salvar:</strong><ul>{errors.map(error => <li key={error}>{error}</li>)}</ul></div>}
+  return <div className="editor-shell"><header className="editor-topbar"><Link href="/" className="back-link"><ArrowLeft size={17} /> Voltar à biblioteca</Link><div className="editor-actions"><span className="save-state">{saved ? <><Check size={15} /> Salvo</> : autosaveState === "salvando" ? "Salvando rascunho…" : "Rascunho salvo automaticamente"}</span><button className="primary-button compact" onClick={save}><Save size={16} /> Salvar ficha</button></div></header><main className="editor-main"><div className="editor-header"><div><div className="eyebrow"><span className="eyebrow-line" /> {isNew ? "NOVA FICHA" : "EDITANDO FICHA"}</div><h1>{isNew ? "Dê forma ao próximo encontro." : enemy.name || "Ficha sem nome"}</h1><p>Preencha o essencial primeiro. O resto pode ganhar detalhes durante a preparação.</p></div><div className="rules-switch"><span>Versão de regras</span><div className="segmented"><button className={enemy.ruleset === "2014" ? "active" : ""} onClick={() => update({ ruleset: "2014" })}>5e · 2014</button><button className={enemy.ruleset === "2024" ? "active" : ""} onClick={() => update({ ruleset: "2024" })}>D&D · 2024</button></div></div></div>{errors.length > 0 && <div className="error-box" role="alert"><strong>Antes de salvar:</strong><ul>{errors.map(error => <li key={error}>{error}</li>)}</ul></div>}
 
 <section className="editor-section identity-section"><div className="section-title"><div><span className="eyebrow">01 · IDENTIDADE</span><h2>Quem está entrando em cena?</h2></div><span className="completion-dot"><Check size={13} /></span></div><div className="form-grid two"><label className="field-label wide"><span>Nome do inimigo <b>*</b></span><input className="large-input" value={enemy.name} onChange={event => update({ name: event.target.value })} placeholder="ex.: Cavaleiro da Cinza" /></label><label className="field-label wide"><span>Conceito curto <b>*</b></span><input value={enemy.concept} onChange={event => update({ concept: event.target.value })} placeholder="ex.: guardião que troca memórias por passagem" /></label><label className="field-label"><span>Tamanho</span><select value={enemy.size} onChange={event => update({ size: event.target.value })}>{sizes.map(item => <option key={item}>{item}</option>)}</select></label><label className="field-label"><span>Tipo</span><select value={enemy.type} onChange={event => update({ type: event.target.value })}>{creatureTypes.map(item => <option key={item}>{item}</option>)}</select></label><label className="field-label"><span>Alinhamento</span><input value={enemy.alignment} onChange={event => update({ alignment: event.target.value })} placeholder="ex.: Neutro e mau" /></label><label className="field-label"><span>Procedência</span><select value={enemy.provenance} onChange={event => update({ provenance: event.target.value as Enemy["provenance"] })}><option>SRD</option><option>Original</option><option>Criado por você</option></select></label></div></section>
 
@@ -62,7 +87,7 @@ export default function EnemyEditor() {
 <section className="editor-section"><div className="section-title"><div><span className="eyebrow">04 · NÍVEL DE DESAFIO</span><h2>O peso da ameaça</h2></div></div><div className="challenge-row"><label className="field-label challenge-field"><span>Nível de desafio <b>*</b></span><select value={enemy.challenge} onChange={event => update({ challenge: event.target.value })}>{challenges.map(item => <option key={item}>{item}</option>)}</select></label><div className="suggestion-card"><div><span>Bônus de proficiência sugerido</span><strong>+{suggested}</strong></div><button className="small-button" onClick={applySuggestedProficiency}>Aplicar sugestão</button></div><NumberField label="Bônus usado na ficha" value={enemy.proficiencyBonus} onChange={value => update({ proficiencyBonus: value })} /></div><div className="calc-hints"><span><Wand2 size={14} /> CD de {abilityShortLabels.sab}: <b>{suggestedSaveDc(enemy, "sab")}</b></span><span><Wand2 size={14} /> ataque de FOR: <b>{formatModifier(suggestedAttackBonus(enemy, "for"))}</b></span><small>Sugestões não travam seus valores.</small></div></section>
 
 <section className="editor-section encounter-section"><div className="section-title"><div><span className="eyebrow">05 · TESTE DE ENCONTRO</span><h2>Isso está forte para a party?</h2></div><div className="encounter-xp">{encounter.xp.toLocaleString("pt-BR")} XP base</div></div><p className="encounter-intro">Coloque o nível e o tamanho da party. O cálculo usa a matemática da versão selecionada e estima o peso desta quantidade de inimigos.</p><div className="form-grid three encounter-inputs"><label className="field-label"><span>Nível da party</span><input type="number" min="1" max="20" value={partyLevel} onChange={event => setPartyLevel(Number(event.target.value))} /></label><label className="field-label"><span>Quantidade de personagens</span><input type="number" min="1" max="12" value={partyCount} onChange={event => setPartyCount(Number(event.target.value))} /></label><label className="field-label"><span>Quantidade deste inimigo</span><input type="number" min="1" max="100" value={monsterCount} onChange={event => setMonsterCount(Number(event.target.value))} /></label></div><div className={`encounter-result result-${encounter.difficulty}`}><div className="result-main"><span className="result-kicker">ESTIMATIVA PARA {partyCount} PERSONAGENS · NÍVEL {partyLevel}</span><strong>{encounter.label}</strong><p>{encounter.ratio}% do próximo limite de dificuldade</p></div><div className="result-numbers"><div><span>XP considerado</span><b>{encounter.adjustedXp.toLocaleString("pt-BR")}</b></div><div><span>Meta seguinte</span><b>{encounter.target.toLocaleString("pt-BR")}</b></div></div></div><p className="encounter-note">{encounter.note} É uma estimativa: terreno, recursos gastos, composição da party e habilidades especiais podem mudar bastante o resultado.</p></section>
-<ActionEditor title="Características" items={enemy.traits} onChange={traits => update({ traits })} addLabel="Adicionar característica" /><ActionEditor title="Ações" items={enemy.actions} onChange={actions => update({ actions })} addLabel="Adicionar ação" /><ActionEditor title="Reações" items={enemy.reactions} onChange={reactions => update({ reactions })} addLabel="Adicionar reação" /><ActionEditor title="Ações lendárias" items={enemy.legendaryActions} onChange={legendaryActions => update({ legendaryActions })} addLabel="Adicionar ação lendária" />
+<section className="editor-section passive-builder"><div className="section-title"><div><span className="eyebrow">PREPARADOR DE PASSIVAS</span><h2>Adicione uma habilidade pronta</h2></div><span className="suggestion-label"><Wand2 size={14} /> sugestões editáveis</span></div><p className="encounter-intro">Escolha um ponto de partida; depois ajuste números e texto para combinar com sua criatura.</p><div className="passive-row"><select value={passiveTemplate} onChange={event => setPassiveTemplate(event.target.value)}><option value="">Escolha uma passiva…</option>{passiveTemplates.map(item => <option key={item.name} value={item.name}>{item.name}</option>)}</select><button className="small-button" onClick={addPassive} disabled={!passiveTemplate}><Plus size={15} /> Adicionar passiva</button></div></section><ActionEditor title="Características" items={enemy.traits} onChange={traits => update({ traits })} addLabel="Adicionar característica" /><ActionEditor title="Ações" items={enemy.actions} onChange={actions => update({ actions })} addLabel="Adicionar ação" /><ActionEditor title="Reações" items={enemy.reactions} onChange={reactions => update({ reactions })} addLabel="Adicionar reação" /><ActionEditor title="Ações lendárias" items={enemy.legendaryActions} onChange={legendaryActions => update({ legendaryActions })} addLabel="Adicionar ação lendária" />
 
 <section className="editor-section"><div className="section-title"><div><span className="eyebrow">09 · NOTAS DO MESTRE</span><h2>O que não cabe na ficha?</h2></div></div><textarea className="notes-area" rows={5} value={enemy.notes} onChange={event => update({ notes: event.target.value })} placeholder="Táticas, pistas de interpretação, terreno favorito, gatilhos narrativos..." /></section><div className="editor-bottom"><Link href="/" className="back-link">Cancelar</Link><button className="primary-button" onClick={save}><Save size={17} /> {isNew ? "Salvar na biblioteca" : "Salvar alterações"}</button></div></main></div>;
 }
