@@ -26,11 +26,43 @@ Para gerar uma build estática:
 
 ```bash
 pnpm check
+pnpm test
 pnpm build
 pnpm preview
 ```
 
 O projeto não usa backend, banco, autenticação, API privada ou runtime proprietário. Os inimigos são armazenados em `localStorage` no navegador.
+
+## GitHub Pages
+
+O frontend é publicado automaticamente por [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml) a cada push na branch `main`. O workflow executa os testes, o TypeScript e a build antes de publicar.
+
+Como o GitHub Pages serve apenas arquivos estáticos, o workflow também copia `index.html` para `404.html`, permitindo recarregar rotas internas da SPA. O frontend não deve guardar segredos, tokens ou credenciais.
+
+No repositório do GitHub, habilite **Settings → Pages → Source: GitHub Actions** uma vez. A URL esperada será `https://SEU_USUARIO.github.io/bestiario-encontros/`.
+
+## Docker e Prisma
+
+O Docker Compose sobe um PostgreSQL local para o futuro backend:
+
+```bash
+cp .env.example .env
+docker compose up -d postgres
+pnpm db:generate
+pnpm db:push
+pnpm db:studio
+```
+
+O schema inicial em [`prisma/schema.prisma`](prisma/schema.prisma) já prevê usuários, sessões e contas OAuth. Ele é uma base para implementar login no backend, mas ainda não implementa autenticação sozinho.
+
+Para testar a versão estática em Docker:
+
+```bash
+docker build -t bestiario-encontros .
+docker run --rm -p 8080:80 bestiario-encontros
+```
+
+O login deverá ficar em uma API separada, hospedada em um serviço que execute Node/Docker e tenha PostgreSQL. O GitHub Pages continua servindo somente o frontend, consumindo essa API por HTTPS.
 
 ## Licença e conteúdo
 
