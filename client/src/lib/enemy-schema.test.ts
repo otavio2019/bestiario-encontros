@@ -6,6 +6,7 @@ import {
   defaultEnemy,
   encounterMultiplier,
   xpForChallenge,
+  suggestEnemyStats,
 } from "./enemy-schema";
 
 function enemyFor(ruleset: "2014" | "2024", challenge: string) {
@@ -144,5 +145,27 @@ describe("assessEncounterComposition — vários inimigos", () => {
     expect(result.xp).toBe(500);
     expect(result.adjustedXp).toBe(500);
     expect(result.difficulty).toBe("low");
+  });
+});
+
+describe("suggestEnemyStats — preparação de ficha", () => {
+  it("sugere uma base coerente para um atacante", () => {
+    const result = suggestEnemyStats("5", "2014", "atacante");
+
+    expect(result.hitPoints).toBe(77);
+    expect(result.armorClass).toBe(15);
+    expect(result.attackBonus).toBe(7);
+    expect(result.saveDc).toBe(15);
+    expect(result.damagePerRound).toBe(34);
+    expect(result.speed).toBe("9 m");
+  });
+
+  it("aumenta resistência e reduz dano para um tanque", () => {
+    const result = suggestEnemyStats("5", "2024", "tanque");
+
+    expect(result.hitPoints).toBe(115);
+    expect(result.armorClass).toBe(18);
+    expect(result.attackBonus).toBe(8);
+    expect(result.damagePerRound).toBe(24);
   });
 });

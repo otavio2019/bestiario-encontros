@@ -96,3 +96,14 @@ h1,h2,h3,p { margin:0; }
 .breakdown-list small { color:#9b8a7d; margin-left:5px; }
 .encounter-disclaimer { color:#8c918d; font-size:12px; line-height:1.6; text-align:center; max-width:720px; margin:20px auto; }
 @media (max-width:720px) { .encounter-main { width:calc(100% - 28px); padding-top:30px; }.encounter-heading { display:block; }.encounter-heading .rules-switch { margin-top:22px; }.composition-row { grid-template-columns:1fr 100px 32px; gap:7px; }.composition-result { display:block; }.composition-result .result-numbers { margin-top:18px; text-align:left; }.passive-row { display:grid; grid-template-columns:1fr; align-items:stretch; } }
+
+.stat-preparer { background:#f7f1e8; border:1px solid #e7d5c5; border-radius:7px; padding:16px; margin-bottom:20px; }
+.stat-preparer p { color:#8b8279; font-size:11px; line-height:1.5; margin:7px 0 0; }
+.stat-preparer-controls { display:flex; gap:12px; align-items:end; margin-top:14px; }
+.stat-preparer-controls .field-label { flex:1; margin:0; }
+.stat-suggestion-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:15px; }
+.stat-suggestion-grid > div { background:#fffdf9; border:1px solid #eaded2; border-radius:5px; padding:10px; }
+.stat-suggestion-grid span,.stat-suggestion-grid small { display:block; color:#9b8c80; font-size:9px; text-transform:uppercase; letter-spacing:.08em; }
+.stat-suggestion-grid b { display:block; color:#8f4f35; font-family:'Fraunces',serif; font-size:20px; margin:3px 0; }
+.stat-suggestion-note { font-size:10px !important; }
+@media (max-width:720px) { .stat-preparer-controls { display:grid; }.stat-suggestion-grid { grid-template-columns:repeat(3,1fr); } }

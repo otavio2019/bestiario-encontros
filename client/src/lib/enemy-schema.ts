@@ -262,6 +262,20 @@ export function validateEnemy(enemy: Enemy): string[] {
 export type EncounterDifficulty = "low" | "moderate" | "high" | "easy" | "medium" | "hard" | "deadly";
 
 export type EncounterEntry = { enemyId: string; count: number };
+export type EnemyRole = "atacante" | "tanque" | "controlador" | "suporte" | "chefe";
+
+export type StatSuggestions = {
+  hitPoints: number;
+  hitDice: string;
+  armorClass: number;
+  speed: string;
+  attackBonus: number;
+  saveDc: number;
+  damagePerRound: number;
+  proficiencyBonus: number;
+  role: EnemyRole;
+  note: string;
+};
 
 const xpByChallenge: Record<string, number> = {
   "0": 10, "1/8": 25, "1/4": 50, "1/2": 100, "1": 200, "2": 450, "3": 700, "4": 1100,
@@ -332,6 +346,57 @@ export function assessEncounterComposition(enemies: Enemy[], entries: EncounterE
   const monsterCount = lines.reduce((total, line) => total + line.count, 0);
   const base = assessEncounterXp(lines.reduce((total, line) => total + line.xp, 0), ruleset, partyLevel, partyCount, monsterCount);
   return { ...base, lines, monsterCount };
+}
+
+const statBenchmarks: Record<number, { hp: number; ac: number; attack: number; dc: number; damage: number; die: string }> = {
+  0: { hp: 8, ac: 12, attack: 3, dc: 10, damage: 3, die: "2d6" },
+  1: { hp: 15, ac: 13, attack: 3, dc: 11, damage: 5, die: "3d8" },
+  2: { hp: 30, ac: 13, attack: 4, dc: 12, damage: 11, die: "5d8" },
+  3: { hp: 45, ac: 14, attack: 5, dc: 13, damage: 16, die: "6d8" },
+  4: { hp: 65, ac: 15, attack: 6, dc: 14, damage: 22, die: "10d8" },
+  5: { hp: 85, ac: 15, attack: 7, dc: 15, damage: 28, die: "10d10" },
+  6: { hp: 100, ac: 16, attack: 8, dc: 15, damage: 34, die: "12d10" },
+  7: { hp: 115, ac: 16, attack: 9, dc: 16, damage: 40, die: "14d10" },
+  8: { hp: 130, ac: 17, attack: 10, dc: 16, damage: 46, die: "15d10" },
+  9: { hp: 145, ac: 17, attack: 10, dc: 16, damage: 52, die: "17d10" },
+  10: { hp: 160, ac: 18, attack: 11, dc: 17, damage: 58, die: "19d10" },
+  11: { hp: 175, ac: 18, attack: 12, dc: 17, damage: 64, die: "20d10" },
+  12: { hp: 190, ac: 18, attack: 13, dc: 18, damage: 70, die: "21d10" },
+  13: { hp: 205, ac: 19, attack: 13, dc: 18, damage: 76, die: "22d10" },
+  14: { hp: 220, ac: 19, attack: 14, dc: 18, damage: 82, die: "24d10" },
+  15: { hp: 235, ac: 19, attack: 14, dc: 19, damage: 88, die: "25d10" },
+  16: { hp: 250, ac: 20, attack: 15, dc: 19, damage: 94, die: "26d10" },
+  17: { hp: 265, ac: 20, attack: 16, dc: 20, damage: 100, die: "27d10" },
+  18: { hp: 280, ac: 20, attack: 16, dc: 20, damage: 106, die: "28d10" },
+  19: { hp: 295, ac: 21, attack: 17, dc: 21, damage: 112, die: "29d10" },
+  20: { hp: 310, ac: 21, attack: 17, dc: 21, damage: 118, die: "30d10" },
+};
+
+export function suggestEnemyStats(challenge: string, ruleset: Ruleset, role: EnemyRole = "atacante"): StatSuggestions {
+  const cr = Math.min(20, Math.max(0, Math.floor(challengeToNumber(challenge))));
+  const base = statBenchmarks[cr];
+  const multipliers: Record<EnemyRole, { hp: number; ac: number; damage: number; speed: string }> = {
+    atacante: { hp: 0.9, ac: 0, damage: 1.2, speed: "9 m" },
+    tanque: { hp: 1.35, ac: 2, damage: 0.85, speed: "9 m" },
+    controlador: { hp: 0.9, ac: 0, damage: 0.8, speed: "9 m" },
+    suporte: { hp: 0.85, ac: 0, damage: 0.7, speed: "9 m" },
+    chefe: { hp: 1.6, ac: 2, damage: 1.35, speed: "9 m" },
+  };
+  const modifier = multipliers[role];
+  const rulesetAdjust = ruleset === "2024" ? 1 : 0;
+  const hitPoints = Math.max(1, Math.round(base.hp * modifier.hp));
+  return {
+    hitPoints,
+    hitDice: base.die,
+    armorClass: base.ac + modifier.ac + rulesetAdjust,
+    speed: modifier.speed,
+    attackBonus: base.attack + rulesetAdjust,
+    saveDc: base.dc + rulesetAdjust,
+    damagePerRound: Math.max(1, Math.round(base.damage * modifier.damage)),
+    proficiencyBonus: suggestedProficiency(challenge),
+    role,
+    note: "Faixas de criação para começar o design, não valores obrigatórios. Resistências, ações extras, controle e terreno podem alterar bastante o poder real.",
+  };
 }
 
 function normalizeAction(input: unknown): ActionBlock {
