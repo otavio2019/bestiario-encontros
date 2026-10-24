@@ -219,3 +219,12 @@ describe("atributos recomendados", () => {
     expect(controller.abilities.int).toBeGreaterThanOrEqual(16);
   });
 });
+
+
+describe("catálogo ampliado de habilidades", () => {
+  it("oferece uma biblioteca grande com todas as categorias", () => {
+    const categories = new Set(actionTemplates.map(item => item.category));
+    expect(actionTemplates.length).toBeGreaterThanOrEqual(30);
+    expect(categories).toEqual(new Set(["ação", "passiva", "reação", "lendária"]));
+  });
+});
