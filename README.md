@@ -93,6 +93,24 @@ Para executar banco e API juntos pelo Docker:
 docker compose up --build
 ```
 
+O Compose também sobe o front-end em um container Nginx. Depois da inicialização, abra:
+
+```txt
+http://localhost:5173
+```
+
+Os serviços ficam assim:
+
+- `web`: front-end compilado e servido pelo Nginx em `http://localhost:5173`;
+- `api`: backend em `http://localhost:3000`;
+- `postgres`: banco local em `localhost:5432`.
+
+Para apontar o front-end para outra API durante o build, use:
+
+```bash
+VITE_API_URL=https://sua-api.example.com docker compose up --build
+```
+
 O schema inicial em [`prisma/schema.prisma`](prisma/schema.prisma), a migration em [`prisma/migrations/0001_init/migration.sql`](prisma/migrations/0001_init/migration.sql) e o cliente Prisma já estão preparados para usuários, sessões e contas OAuth.
 
 Para abrir o Prisma Studio:

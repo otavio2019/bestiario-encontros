@@ -38,5 +38,18 @@ services:
     ports:
       - "3000:3000"
 
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    container_name: bestiario-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
+
 volumes:
   bestiario-postgres-data:
