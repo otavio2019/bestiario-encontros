@@ -17,6 +17,9 @@ Biblioteca local para criar e consultar inimigos compatíveis com D&D 5e (2014) 
 - Biblioteca de modelos reutilizáveis para ações, passivas, reações e ações lendárias.
 - Catálogo amplo com mais de 30 modelos de ataques, características, reações e ações lendárias, com busca e filtro por categoria.
 - Recomendador de atributos por ND, função da criatura e tipo, com aplicação editável na ficha.
+- Modo escuro persistente para preparação noturna e mesas com pouca luz.
+- Retrato por criatura com upload, compressão automática, miniatura na biblioteca e imagem na ficha para impressão.
+- Rascunho automático e preservação de imagens ao exportar/importar a biblioteca JSON.
 
 ## Executar localmente
 

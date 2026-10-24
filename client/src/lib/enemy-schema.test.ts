@@ -4,6 +4,7 @@ import {
   assessEncounterComposition,
   calculateModifier,
   defaultEnemy,
+  normalizeEnemy,
   encounterMultiplier,
   xpForChallenge,
   suggestEnemyStats,
@@ -226,5 +227,15 @@ describe("catálogo ampliado de habilidades", () => {
     const categories = new Set(actionTemplates.map(item => item.category));
     expect(actionTemplates.length).toBeGreaterThanOrEqual(30);
     expect(categories).toEqual(new Set(["ação", "passiva", "reação", "lendária"]));
+  });
+});
+
+
+describe("imagens de criaturas", () => {
+  it("preserva data URLs de imagem e rejeita valores que não são imagens", () => {
+    const normalized = normalizeEnemy({ ...defaultEnemy(), name: "Guardião", image: "data:image/webp;base64,abc" });
+    const withoutImage = normalizeEnemy({ ...defaultEnemy(), name: "Guardião", image: "https://example.com/image.jpg" });
+    expect(normalized?.image).toBe("data:image/webp;base64,abc");
+    expect(withoutImage?.image).toBe("");
   });
 });

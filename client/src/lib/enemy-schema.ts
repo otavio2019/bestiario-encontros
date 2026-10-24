@@ -86,6 +86,7 @@ export type Enemy = {
   id: string;
   name: string;
   concept: string;
+  image: string;
   ruleset: Ruleset;
   provenance: Provenance;
   size: string;
@@ -204,6 +205,7 @@ export function defaultEnemy(): Enemy {
     id: createId(),
     name: "",
     concept: "",
+    image: "",
     ruleset: "2014",
     provenance: "Criado por você",
     size: "Médio",
@@ -549,6 +551,7 @@ export function normalizeEnemy(input: unknown): Enemy | null {
     id: typeof source.id === "string" && source.id ? source.id : createId(),
     name: source.name.trim(),
     concept: typeof source.concept === "string" ? source.concept : "",
+    image: typeof source.image === "string" && source.image.startsWith("data:image/") ? source.image : "",
     ruleset: source.ruleset === "2024" ? "2024" : "2014",
     provenance: source.provenance === "SRD" || source.provenance === "Original" ? source.provenance : "Criado por você",
     abilities: {
