@@ -7,6 +7,8 @@ import {
   encounterMultiplier,
   xpForChallenge,
   suggestEnemyStats,
+  actionTemplates,
+  balanceWarnings,
   rollDamage,
   rollDice,
 } from "./enemy-schema";
@@ -186,5 +188,21 @@ describe("rolagens do modo Combate", () => {
 
     expect(result.rolls).toHaveLength(2);
     expect(result.total).toBe(result.rolls[0] + result.rolls[1] + 3);
+  });
+});
+
+
+describe("revisão automática e biblioteca de habilidades", () => {
+  it("gera alertas quando os números fogem muito da faixa do ND", () => {
+    const enemy = { ...defaultEnemy(), name: "Colosso", challenge: "2", hitPoints: 200, armorClass: 20, actions: [] };
+    const warnings = balanceWarnings(enemy);
+    expect(warnings.some(item => item.title === "PV acima da faixa sugerida")).toBe(true);
+    expect(warnings.some(item => item.title === "CA muito alta para o ND")).toBe(true);
+    expect(warnings.some(item => item.title === "Nenhuma ação cadastrada")).toBe(true);
+  });
+
+  it("oferece modelos para ação, passiva, reação e ação lendária", () => {
+    expect(actionTemplates.map(item => item.category)).toEqual(expect.arrayContaining(["ação", "passiva", "reação", "lendária"]));
+    expect(actionTemplates.every(item => item.name && item.description && item.summary)).toBe(true);
   });
 });

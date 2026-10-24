@@ -13,6 +13,38 @@ export type ActionBlock = {
   damage?: string;
 };
 
+export type ActionTemplate = ActionBlock & { category: "passiva" | "ação" | "reação" | "lendária"; summary: string };
+
+export const actionTemplates: ActionTemplate[] = [
+  { name: "Ataque multi-ação", summary: "Pressiona um alvo com mais de um golpe.", category: "ação", description: "A criatura realiza dois ataques, usando a mesma ação.", attackBonus: 5, damage: "1d8 + 3 cortante" },
+  { name: "Ataque à distância", summary: "Opção segura para atacar de longe.", category: "ação", description: "Ataque à distância: alcance 18/72 m. A criatura faz um ataque contra um alvo que possa ver.", attackBonus: 5, damage: "1d8 + 3 perfurante" },
+  { name: "Explosão elemental", summary: "Dano em área com teste de resistência.", category: "ação", description: "Cada criatura em uma área de 3 m faz um teste de resistência de Destreza, sofrendo metade do dano em um sucesso.", saveAbility: "des", saveDc: 14, damage: "3d6 fogo" },
+  { name: "Empurrão brutal", summary: "Dano e reposicionamento do alvo.", category: "ação", description: "Em um acerto, o alvo sofre o dano e deve ser empurrado 3 m se falhar em um teste de resistência de Força.", attackBonus: 5, damage: "1d10 + 3 contundente" },
+  { name: "Recarga — sopro", summary: "Ataque forte que volta com recarga.", category: "ação", description: "A criatura expele energia em um cone de 4,5 m. Cada criatura na área faz um teste de resistência.", saveAbility: "des", saveDc: 15, damage: "6d6 ácido" },
+  { name: "Aparar", summary: "Reação defensiva para reduzir dano.", category: "reação", description: "A criatura adiciona 2 à sua CA contra um ataque corpo a corpo que a atingiria. Para isso, deve ver o atacante." },
+  { name: "Passo sombrio", summary: "Movimento rápido sem provocar ataques.", category: "passiva", description: "Como ação bônus, a criatura se teleporta até 9 m para um espaço desocupado que possa ver." },
+  { name: "Resistência lendária", summary: "Evita uma falha decisiva.", category: "lendária", description: "Se a criatura falhar em um teste de resistência, ela pode escolher ser bem-sucedida em vez disso." },
+].map(({ category, summary, ...action }) => ({ ...action, category, summary })) as ActionTemplate[];
+
+export type BalanceWarning = { level: "info" | "warning" | "danger"; title: string; detail: string };
+
+export function balanceWarnings(enemy: Enemy): BalanceWarning[] {
+  const cr = Math.min(20, Math.max(0, Math.floor(challengeToNumber(enemy.challenge))));
+  const base = statBenchmarks[cr] ?? statBenchmarks[0];
+  const warnings: BalanceWarning[] = [];
+  if (!enemy.name.trim()) warnings.push({ level: "info", title: "Dê um nome à criatura", detail: "Um nome ajuda a identificar esta ficha na biblioteca e no modo Combate." });
+  if (enemy.hitPoints > base.hp * 1.8) warnings.push({ level: "warning", title: "PV acima da faixa sugerida", detail: `${enemy.hitPoints} PV está bem acima da referência de ${base.hp} PV para ND ${enemy.challenge}.` });
+  if (enemy.hitPoints < base.hp * 0.45) warnings.push({ level: "warning", title: "PV abaixo da faixa sugerida", detail: `${enemy.hitPoints} PV pode fazer a criatura cair antes de cumprir seu papel.` });
+  if (enemy.armorClass > base.ac + 4) warnings.push({ level: "warning", title: "CA muito alta para o ND", detail: `A CA ${enemy.armorClass} está acima da referência de ${base.ac}. Resistências podem elevar ainda mais a durabilidade.` });
+  if (enemy.actions.length === 0) warnings.push({ level: "danger", title: "Nenhuma ação cadastrada", detail: "Adicione pelo menos uma ação para que a criatura seja utilizável no modo Combate." });
+  const attackValues = enemy.actions.map(action => action.attackBonus).filter((value): value is number => typeof value === "number");
+  if (attackValues.some(value => value > base.attack + 4)) warnings.push({ level: "warning", title: "Bônus de ataque elevado", detail: `Há uma ação com bônus acima da referência de +${base.attack} para este ND.` });
+  const saveValues = enemy.actions.map(action => action.saveDc).filter((value): value is number => typeof value === "number");
+  if (saveValues.some(value => value > base.dc + 4)) warnings.push({ level: "warning", title: "CD muito alta para o ND", detail: `Há uma ação com CD acima da referência de ${base.dc}.` });
+  if (enemy.resistances && enemy.immunities) warnings.push({ level: "info", title: "Defesas especiais acumuladas", detail: "Resistências e imunidades juntas podem tornar o encontro mais difícil do que o cálculo de XP indica." });
+  return warnings;
+}
+
 export type Enemy = {
   id: string;
   name: string;

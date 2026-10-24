@@ -12,6 +12,9 @@ Biblioteca local para criar e consultar inimigos compatíveis com D&D 5e (2014) 
 - Importação e exportação JSON.
 - Dados salvos localmente no navegador.
 - Impressão e salvamento como PDF pelo navegador.
+- Modo Combate com iniciativa, alvo, CA, rolagem de ataque, dano automático e controle de PV.
+- Alertas automáticos de balanceamento por ND, PV, CA, ataque, CD e defesas especiais.
+- Biblioteca de modelos reutilizáveis para ações, passivas, reações e ações lendárias.
 
 ## Executar localmente
 
