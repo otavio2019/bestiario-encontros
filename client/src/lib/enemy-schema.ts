@@ -24,6 +24,12 @@ export const actionTemplates: ActionTemplate[] = [
   { name: "Aparar", summary: "Reação defensiva para reduzir dano.", category: "reação", description: "A criatura adiciona 2 à sua CA contra um ataque corpo a corpo que a atingiria. Para isso, deve ver o atacante." },
   { name: "Passo sombrio", summary: "Movimento rápido sem provocar ataques.", category: "passiva", description: "Como ação bônus, a criatura se teleporta até 9 m para um espaço desocupado que possa ver." },
   { name: "Resistência lendária", summary: "Evita uma falha decisiva.", category: "lendária", description: "Se a criatura falhar em um teste de resistência, ela pode escolher ser bem-sucedida em vez disso." },
+  { name: "Agarrar", summary: "Prende um alvo próximo.", category: "ação", description: "Em um acerto, o alvo fica agarrado. O alvo pode repetir o teste no fim de cada turno.", attackBonus: 5, damage: "1d6 + 3 contundente" },
+  { name: "Rajada de medo", summary: "Assusta vários inimigos.", category: "ação", description: "Cada criatura em um cone de 4,5 m faz um teste de resistência de Sabedoria ou fica amedrontada até o fim do próximo turno.", saveAbility: "sab", saveDc: 14 },
+  { name: "Manto de sombras", summary: "Fica difícil de atingir.", category: "passiva", description: "Enquanto estiver em luz fraca ou escuridão, ataques contra a criatura têm desvantagem até o início do próximo turno dela." },
+  { name: "Vontade inabalável", summary: "Resiste a medo e encantamento.", category: "passiva", description: "A criatura tem vantagem em testes de resistência contra as condições amedrontado e enfeitiçado." },
+  { name: "Contra-ataque", summary: "Responde quando é atingida.", category: "reação", description: "Quando uma criatura erra um ataque corpo a corpo contra ela, a criatura pode fazer um ataque contra o atacante.", attackBonus: 5, damage: "1d8 + 3 cortante" },
+  { name: "Comando do mestre", summary: "Concede uma ação a um aliado.", category: "lendária", description: "Uma criatura aliada que possa ouvir pode se mover até metade do deslocamento e fazer um ataque usando a reação." },
 ].map(({ category, summary, ...action }) => ({ ...action, category, summary })) as ActionTemplate[];
 
 export type BalanceWarning = { level: "info" | "warning" | "danger"; title: string; detail: string };
@@ -142,6 +148,11 @@ export const passiveTemplates = [
   { name: "Evasão", description: "Se a criatura for bem-sucedida em um teste de resistência de Destreza para sofrer metade do dano, ela não sofre dano; se falhar, sofre metade." },
   { name: "Resistência mágica", description: "A criatura tem vantagem em testes de resistência contra magias e outros efeitos mágicos." },
   { name: "Camuflagem natural", description: "A criatura tem vantagem em testes de Destreza (Furtividade) feitos para se esconder no ambiente escolhido pelo Mestre." },
+  { name: "Imunidade a condição", description: "A criatura não pode ser enfeitiçada, amedrontada, envenenada ou sofrer a condição escolhida pelo Mestre." },
+  { name: "Sentido sísmico", description: "A criatura pode detectar vibrações através do solo a até 18 metros, desde que esteja em contato com a mesma superfície." },
+  { name: "Deslocamento aracnídeo", description: "A criatura pode escalar superfícies difíceis, inclusive de cabeça para baixo, sem precisar fazer testes de habilidade." },
+  { name: "Mimetismo", description: "A criatura pode imitar sons que tenha ouvido. Uma criatura que ouvir pode perceber o truque com um teste de Sabedoria (Percepção)." },
+  { name: "Absorver energia", description: "Quando sofre dano do tipo escolhido, a criatura reduz o dano e ganha vantagem no próximo ataque antes do fim do turno seguinte." },
 ] as const;
 
 export function defaultEnemy(): Enemy {
@@ -295,6 +306,27 @@ export type EncounterDifficulty = "low" | "moderate" | "high" | "easy" | "medium
 
 export type EncounterEntry = { enemyId: string; count: number };
 export type EnemyRole = "atacante" | "tanque" | "controlador" | "suporte" | "chefe";
+export type AbilityRecommendation = { abilities: Abilities; primary: AbilityKey; secondary: AbilityKey; note: string };
+
+export function suggestAbilityScores(challenge: string, role: EnemyRole = "atacante", creatureType = "") : AbilityRecommendation {
+  const cr = Math.min(20, Math.max(0, Math.floor(challengeToNumber(challenge))));
+  const growth = Math.floor(cr / 4);
+  const matrix: Record<EnemyRole, [number, number, number, number, number, number, AbilityKey, AbilityKey, string]> = {
+    atacante: [16, 14, 14, 8, 12, 10, "for", "des", "Prioriza o atributo usado para atacar e mantém DES suficiente para iniciativa e defesa."],
+    tanque: [16, 10, 18, 8, 12, 10, "for", "con", "Prioriza FOR para ameaçar e CON para sustentar a criatura no campo."],
+    controlador: [8, 14, 14, 16, 14, 10, "int", "sab", "Prioriza o atributo da CD e mantém SAB para percepção e resistência mental."],
+    suporte: [8, 14, 14, 14, 16, 12, "sab", "car", "Prioriza SAB para percepção, suporte e CDs; CAR ajuda na presença da criatura."],
+    chefe: [18, 14, 16, 14, 14, 14, "for", "des", "Distribui valores altos para funcionar como ameaça central sem depender de um único número."],
+  };
+  const [forca, destreza, constituicao, inteligencia, sabedoria, carisma, primary, secondary, note] = matrix[role];
+  const values: Abilities = { for: forca, des: destreza, con: constituicao, int: inteligencia, sab: sabedoria, car: carisma };
+  values[primary] = Math.min(30, values[primary] + growth);
+  values[secondary] = Math.min(30, values[secondary] + Math.floor(growth / 2));
+  if (["Animal", "Monstruosidade", "Dragão"].includes(creatureType) && role !== "controlador" && role !== "suporte") values.sab = Math.max(values.sab, 12 + Math.floor(cr / 5));
+  if (["Fada", "Aberração", "Elemental"].includes(creatureType) && (role === "controlador" || role === "suporte")) values.int = Math.max(values.int, 14 + Math.floor(cr / 5));
+  return { abilities: values, primary, secondary, note: `${note} A recomendação considera ND ${challenge}${creatureType ? ` e tipo ${creatureType}` : ""}; ajuste livremente para a história.` };
+}
+
 
 export type StatSuggestions = {
   hitPoints: number;

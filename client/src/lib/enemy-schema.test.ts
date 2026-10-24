@@ -9,6 +9,7 @@ import {
   suggestEnemyStats,
   actionTemplates,
   balanceWarnings,
+  suggestAbilityScores,
   rollDamage,
   rollDice,
 } from "./enemy-schema";
@@ -204,5 +205,17 @@ describe("revisão automática e biblioteca de habilidades", () => {
   it("oferece modelos para ação, passiva, reação e ação lendária", () => {
     expect(actionTemplates.map(item => item.category)).toEqual(expect.arrayContaining(["ação", "passiva", "reação", "lendária"]));
     expect(actionTemplates.every(item => item.name && item.description && item.summary)).toBe(true);
+  });
+});
+
+
+describe("atributos recomendados", () => {
+  it("prioriza o atributo principal de acordo com a função", () => {
+    const attacker = suggestAbilityScores("5", "atacante", "Humanoide");
+    const controller = suggestAbilityScores("5", "controlador", "Fada");
+    expect(attacker.primary).toBe("for");
+    expect(attacker.abilities.for).toBeGreaterThan(attacker.abilities.int);
+    expect(controller.primary).toBe("int");
+    expect(controller.abilities.int).toBeGreaterThanOrEqual(16);
   });
 });

@@ -15,6 +15,7 @@ Biblioteca local para criar e consultar inimigos compatíveis com D&D 5e (2014) 
 - Modo Combate com iniciativa, alvo, CA, rolagem de ataque, dano automático e controle de PV.
 - Alertas automáticos de balanceamento por ND, PV, CA, ataque, CD e defesas especiais.
 - Biblioteca de modelos reutilizáveis para ações, passivas, reações e ações lendárias.
+- Recomendador de atributos por ND, função da criatura e tipo, com aplicação editável na ficha.
 
 ## Executar localmente
 
