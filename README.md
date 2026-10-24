@@ -97,12 +97,12 @@ docker compose up --build
 O Compose também sobe o front-end em um container Nginx. Depois da inicialização, abra:
 
 ```txt
-http://localhost:5173
+http://localhost:5174
 ```
 
 Os serviços ficam assim:
 
-- `web`: front-end compilado e servido pelo Nginx em `http://localhost:5173`;
+- `web`: front-end compilado e servido pelo Nginx em `http://localhost:5174`;
 - `api`: backend em `http://localhost:3000`;
 - `postgres`: banco local em `localhost:5432`.
 
