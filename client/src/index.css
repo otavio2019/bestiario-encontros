@@ -1,4 +1,137 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
+
+/* Direção visual medieval — grimório de mestre */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=IM+Fell+English:ital@0;1&family=Uncial+Antiqua&display=swap');
+
+:root {
+  --canvas: #201914;
+  --ink: #2d2118;
+  --paper: #f2e4c7;
+  --line: #b99969;
+  --copper: #9c5b2e;
+  --copper-dark: #6f351f;
+  --parchment-deep: #d9bd8d;
+  --forest: #27352d;
+  --gold: #c4974a;
+  --shadow-ink: rgba(34, 22, 13, .28);
+}
+
+* { box-sizing: border-box; }
+body {
+  background: #201914;
+  color: var(--ink);
+  font-family: 'IM Fell English', Georgia, serif;
+}
+button, input, select, textarea { font-family: inherit; }
+button, a { transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+
+.app-shell { background: radial-gradient(circle at 76% 12%, rgba(191,145,75,.12), transparent 28%), #241b15; }
+.sidebar {
+  background: linear-gradient(180deg, #1d201b 0%, #17201d 100%);
+  border-right: 8px solid #4b2d1c;
+  box-shadow: 8px 0 0 rgba(10,8,5,.2), inset -1px 0 0 #a17845;
+}
+.sidebar::after { content:''; position:absolute; inset:14px 10px; border:1px solid rgba(197,154,79,.24); pointer-events:none; }
+.brand-mark { position:relative; z-index:1; }
+.brand-mark > span {
+  border-radius: 2px;
+  border: 1px solid #c3954b;
+  background: #60371f;
+  color: #f2db9f;
+  box-shadow: inset 0 0 0 3px #3e2618;
+  font-family: 'Uncial Antiqua', serif;
+}
+.brand-mark strong, .brand-mark small { font-family: 'Cinzel', serif; }
+.brand-mark strong { color:#f0d69b; letter-spacing:.03em; }
+.brand-mark small { color:#b89a6a; }
+.sidebar-rule { background: linear-gradient(90deg, transparent, #b0844a, transparent); }
+.nav-item { border-radius:2px; font-family:'Cinzel', serif; letter-spacing:.02em; color:#c9b58f; }
+.nav-item:hover, .nav-item.active { background:#3b2a1f; color:#f4d99e; box-shadow: inset 3px 0 0 var(--gold); }
+.nav-item.active { color:#f0bd69; }
+.sidebar-note { border-left-color: var(--gold); color:#bca784; font-family:'IM Fell English', serif; }
+.sidebar-note strong { color:#f0d29a; font-family:'Cinzel', serif; font-size:10px; }
+.sidebar-bottom { color:#9d8867; border-color:#54402a; }
+.main-content { background: #ead7b5; background-image: radial-gradient(rgba(93,53,22,.08) .7px, transparent .7px); background-size: 9px 9px; box-shadow: inset 0 0 70px rgba(75,43,18,.14); }
+.topbar { border-color:#b89665; }
+.breadcrumb, .top-actions { font-family:'Cinzel', serif; }
+.breadcrumb { color:#806b4b; }
+.breadcrumb strong { color:#4f3422; }
+.hero-row h1, .section-heading h2, .stat-card strong, .enemy-card h3, .editor-header h1, .section-title h2, .action-name, .sheet-header h1, .sheet-block h2, .sheet-action h3, .not-found h1, .encounter-heading h1, .combat-heading h1 { font-family:'Cinzel', Georgia, serif; }
+.hero-row h1 { color:#352317; font-weight:700; text-shadow:1px 1px 0 rgba(255,244,213,.45); }
+.hero-row h1 em { color:#7c3d25; }
+.hero-copy, .editor-header p, .encounter-heading p, .combat-heading p { color:#735c42; }
+.eyebrow { color:#8a6336; font-family:'Cinzel', serif; letter-spacing:.16em; }
+.eyebrow-line { background:var(--gold); }
+.primary-button { background:linear-gradient(#a86a35, #753c25); border:1px solid #592d1d; border-radius:3px; color:#ffe6ae; font-family:'Cinzel', serif; box-shadow:0 3px 0 #482617, 0 8px 17px rgba(73,39,20,.18); }
+.primary-button:hover { background:linear-gradient(#bd7b3e, #88492c); transform:translateY(-1px); }
+.secondary-button, .small-button { border-radius:3px; border-color:#b18b5b; background:#ead3a8; color:#6b3d27; font-family:'Cinzel', serif; }
+.secondary-button:hover, .small-button:hover { background:#f3dfb8; border-color:#8f5e2e; }
+.icon-button { border-radius:3px; border-color:#b18b5b; background:#ead3a8; color:#74462b; }
+.stats-row { gap:14px; }
+.stat-card, .enemy-card, .editor-section, .combat-roster, .combat-log, .encounter-card {
+  border-radius:3px;
+  border-color:#b99a68;
+  background:#f1dfbd;
+  box-shadow: 0 5px 0 rgba(83,48,23,.09), 0 12px 26px var(--shadow-ink);
+}
+.stat-card { min-height:110px; }
+.stat-card::before, .editor-section::before, .encounter-card::before { content:''; position:absolute; inset:7px; border:1px solid rgba(135,91,43,.2); border-radius:1px; pointer-events:none; }
+.stat-card, .editor-section, .encounter-card { position:relative; }
+.stat-label, .stat-meta, .result-count { color:#8a6d4a; font-family:'Cinzel', serif; }
+.stat-card strong { color:#4b2e1d; }
+.stat-accent { background:#344235; border-color:#a17d47; }
+.stat-accent strong, .stat-accent .stat-label, .stat-accent .stat-meta { color:#e8c980; }
+.toolbar-section { border-color:#b89665; }
+.search-wrap, .filter-panel, .filter-toggle, .view-toggle { border-radius:3px; border-color:#b99a68; background:#f2e3c6; }
+.search-wrap input, .filter-panel select, .field-label select, .field-label input, .field-label textarea, .action-editor textarea, .notes-area { background:#f8ebcf; border-color:#b99969; color:#3c291b; border-radius:2px; }
+.filter-panel label, .field-label { color:#765b3d; font-family:'Cinzel', serif; }
+.enemy-card:hover { border-color:#8c5b2d; box-shadow:0 8px 0 rgba(83,48,23,.1), 0 16px 30px rgba(66,38,16,.23); transform:translateY(-3px); }
+.card-main h3 { color:#4a2b1b; }
+.card-main p { color:#765e42; }
+.card-divider, .page-footer { border-color:#c2a87a; }
+.card-foot { color:#7b3c25; border-color:#c2a87a; font-family:'Cinzel', serif; }
+.provenance-badge, .rules-chip { border-radius:2px; font-family:'Cinzel', serif; }
+.badge-moss { color:#42543b; background:#d8dfc3; }
+.badge-copper { color:#783e23; background:#ead0a0; }
+.badge-ink { color:#3d4b4b; background:#d0d8cf; }
+.page-footer { color:#80694b; }
+
+.editor-shell, .view-shell, .combat-shell, .encounter-shell { background:#ead7b5; background-image:radial-gradient(rgba(93,53,22,.07) .7px, transparent .7px); background-size:9px 9px; }
+.editor-topbar, .view-topbar { background:#26342c; border-color:#ae824b; box-shadow:0 3px 0 rgba(51,30,17,.22); }
+.editor-topbar .back-link, .view-topbar .back-link { color:#e2c58d; font-family:'Cinzel', serif; }
+.save-state { color:#d7bd8b; font-family:'Cinzel', serif; }
+.editor-header { border-bottom:1px solid #b89665; }
+.editor-section { overflow:hidden; }
+.section-title h2 { color:#4d2e1d; }
+.completion-dot { background:#dbe0c2; color:#4c643f; }
+.suggestion-card, .stat-preparer, .passive-builder, .balance-panel, .action-library { background:#e7cea0; border-color:#b48a55; border-radius:3px; }
+.suggestion-card strong, .stat-suggestion-grid b, .encounter-xp { color:#7b3c25; }
+.ability-card, .stat-suggestion-grid > div { background:#f7e9cc; border-color:#bfa176; border-radius:2px; }
+.ability-card strong { color:#7b3c25; }
+.calc-hints span { background:#dfe5ca; }
+.action-editor { border-color:#c6aa78; }
+.challenge-stamp { background:#f1dfbd; border-color:#9f703a; box-shadow:4px 4px 0 rgba(83,48,23,.1); }
+.encounter-result, .composition-result { border-radius:3px; }
+.combatant-card { background:#f7e8ca; border-color:#b99969; border-radius:3px; }
+.combatant-card.active-turn { border-color:#8d5b2d; box-shadow:0 0 0 3px rgba(141,91,45,.2); }
+.combatant-card.active-turn::before { color:#7b3c25; font-family:'Cinzel', serif; }
+.initiative-badge { border-radius:2px; background:#ead0a0; border:1px solid #a8793d; color:#6f351f; font-family:'Cinzel', serif; }
+.action-roll-button { border-radius:2px; background:#ead0a0; border-color:#b28b59; color:#6f351f; font-family:'Cinzel', serif; }
+.action-roll-button:hover { background:#f4ddb2; }
+.log-item { background:#ead7b5; border-color:#9f793f; color:#644d36; }
+.sheet-wrap { background:#f1dfbd; border-color:#9e7947; box-shadow:0 8px 0 rgba(69,39,19,.12), 0 18px 42px rgba(55,31,15,.25); }
+.sheet-rule { background:#8f532e; }
+.sheet-abilities > div { background:#e4cea2; border:1px solid #b28b59; }
+.sheet-action p, .info-block p { color:#5f4933; }
+.master-note { background:#e7cea0; border-color:#8d5b2d; }
+.not-found { background:#ead7b5; }
+
+@media (max-width:720px) {
+  .sidebar { border-right:0; border-bottom:8px solid #4b2d1c; }
+  .sidebar::after { inset:8px; }
+  .top-actions .auth-login { font-size:0; padding:9px; }
+  .top-actions .auth-login svg { margin:0; }
+}
+
 @import "tailwindcss";
 @import "tw-animate-css";
 

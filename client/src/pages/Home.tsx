@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { BookOpen, ChevronRight, Copy, Download, Filter, Grid3X3, List, LogIn, LogOut, Plus, Search, Sparkles, Trash2, Upload, Wand2 } from "lucide-react";
+import { BookOpen, ChevronRight, Copy, Download, Filter, Grid3X3, List, LogIn, LogOut, Plus, Search, Sparkles, Swords, Trash2, Upload, Wand2 } from "lucide-react";
 import { API_URL, AuthUser, getCurrentUser, logout } from "@/lib/auth";
 import { challengeToNumber, createId, Enemy, loadEnemies, normalizeEnemy, saveEnemies } from "@/lib/enemy-schema";
 
@@ -101,6 +101,7 @@ export default function Home() {
         <nav className="nav-stack" aria-label="Navegação principal">
           <a className="nav-item active" href="#biblioteca"><BookOpen size={17} /> Biblioteca <span className="nav-count">{friendlyCount(enemies.length)}</span></a>
           <button type="button" className="nav-item" onClick={() => navigate("/inimigos/novo")}><Plus size={17} /> Novo inimigo</button>
+          <Link href="/encontros" className="nav-item"><Swords size={17} /> Montar encontro</Link>
         </nav>
         <Link href="/combate" className="sidebar-note sidebar-link"><Sparkles size={16} /><p><strong>Modo combate.</strong><br />Rode dados e acompanhe a mesa.</p></Link>
         <div className="sidebar-bottom"><span className="status-dot" /> Biblioteca local <span className="version">v0.1</span></div>
@@ -108,7 +109,7 @@ export default function Home() {
 
       <main className="main-content" id="biblioteca">
         <header className="topbar"><div className="breadcrumb"><span>Campanha</span><ChevronRight size={14} /><strong>Biblioteca de inimigos</strong></div><div className="top-actions"><button type="button" className="icon-button" aria-label="Importar JSON" title="Importar JSON" onClick={() => fileInput.current?.click()}><Upload size={17} /></button><button type="button" className="icon-button" aria-label="Exportar biblioteca" title="Exportar biblioteca" onClick={exportLibrary}><Download size={17} /></button>{user ? <><span className="auth-user">{user.image && <img src={user.image} alt="" />}{user.name ?? user.email}</span><button type="button" className="secondary-button auth-logout" onClick={handleLogout}><LogOut size={14} /> Sair</button></> : <a className="secondary-button auth-login" href={`${API_URL}/api/auth/github`}><LogIn size={15} /> Entrar com GitHub</a>}<input ref={fileInput} type="file" accept="application/json" className="visually-hidden" onChange={event => { importLibrary(event.target.files?.[0]); event.currentTarget.value = ""; }} /></div></header>
-        <section className="hero-row"><div><div className="eyebrow"><span className="eyebrow-line" /> ARQUIVO DE CAMPANHA</div><h1>Seus inimigos,<br /><em>prontos para a cena.</em></h1><p className="hero-copy">Uma biblioteca viva para criar, ajustar e consultar criaturas em D&D 5e e 2024.</p></div><Link href="/inimigos/novo" className="primary-button"><Plus size={18} /> Criar inimigo</Link></section>
+        <section className="hero-row"><div><div className="eyebrow"><span className="eyebrow-line" /> GRIMÓRIO DE CAMPANHA</div><h1>Seus inimigos,<br /><em>prontos para a cena.</em></h1><p className="hero-copy">Um grimório vivo para preparar criaturas, encontros e batalhas em D&D 5e e 2024.</p></div><Link href="/inimigos/novo" className="primary-button"><Plus size={18} /> Criar inimigo</Link></section>
 
         <section className="stats-row" aria-label="Resumo da biblioteca"><div className="stat-card"><span className="stat-label">Total na biblioteca</span><strong>{friendlyCount(enemies.length)}</strong><span className="stat-meta">inimigos guardados</span></div><div className="stat-card"><span className="stat-label">Versão mais usada</span><strong>{enemies.filter(enemy => enemy.ruleset === "2024").length >= enemies.filter(enemy => enemy.ruleset === "2014").length ? "2024" : "5e"}</strong><span className="stat-meta">regras ativas</span></div><div className="stat-card stat-accent"><span className="stat-label">Seu próximo passo</span><strong><Wand2 size={19} /> ajustar</strong><span className="stat-meta">um inimigo existente</span></div></section>
 
