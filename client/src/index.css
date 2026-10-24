@@ -281,3 +281,12 @@ h1,h2,h3,p { margin:0; }
 
 .action-library-tools { display:grid; grid-template-columns:1fr 220px; gap:9px; margin-bottom:10px; }.action-library-tools input, .action-library-tools select { width:100%; min-height:38px; background:#f8ebcf; border:1px solid #b99969; color:#3c291b; border-radius:2px; padding:0 10px; }.template-count { color:#856845; font-size:10px; margin-top:8px; font-family:'Cinzel',serif; }
 @media (max-width:720px) { .action-library-tools { grid-template-columns:1fr; } }
+
+/* Passe final: estas regras ficam por último para preservar o acabamento medieval
+   também nos blocos adicionados depois do tema base. */
+.action-library, .passive-builder, .balance-panel { background:#e7cea0; border-color:#b48a55; border-radius:3px; }
+.action-library-row select { border:1px solid #b99969; background:#f8ebcf; color:#3c291b; border-radius:2px; }
+.template-summary, .template-count { color:#765a38; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline:3px solid rgba(141,91,45,.42); outline-offset:2px; }
+.action-library-tools input::placeholder, .action-library-row select:invalid { color:#8d7455; }
+@media (max-width:720px) { .action-library-row button, .action-library-row select { min-height:42px; } }
